@@ -1,6 +1,8 @@
 ﻿using NModbus;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Net.Sockets;
 using System.Text;
 using TempSystem.Models;
@@ -11,6 +13,8 @@ namespace TempSystem.Services
     {
         private TcpClient? client;
         private IModbusMaster? master;
+
+        public event EventHandler<Exception>? ConnectionLost;
 
         public async Task Connect(string ip, int port)
         {
@@ -32,33 +36,60 @@ namespace TempSystem.Services
             catch { Disconnect(); throw; }
         }
 
-        private IModbusMaster GetMaster()
-        { return master ?? throw new InvalidOperationException("Нет подключения."); }
-        
-        public SystemState ReadState()
+        private T Execute<T>(Func<IModbusMaster, T> action, T failureResult)
         {
-            var master = GetMaster();
-            ushort[] system = master.ReadInputRegisters(1, 0, 2);
-            ushort[] heater = master.ReadInputRegisters(2, 0, 2);
-            ushort[] ambient = master.ReadInputRegisters(3, 0, 2);
-            ushort[] pressure = master.ReadInputRegisters(4, 0, 2);
-            ushort[] pid = master.ReadHoldingRegisters(5, 0, 2);
+            var activeMaster = master;
+            if (activeMaster == null)
+                return failureResult;
 
-            return new SystemState
+            try
             {
-                TSystem = unchecked((short)system[0]) / 10.0,
-                THeater = unchecked((short)heater[0]) / 10.0,
-                TAmbient = unchecked((short)ambient[0]) / 10.0,
-                Pressure = pressure[0] / 10.0,
+                return action(activeMaster);
+            }
+            catch (Exception ex) when (ex is IOException or SocketException or
+                TimeoutException or ObjectDisposedException)
+            {
+                Disconnect();
+                ConnectionLost?.Invoke(this, ex);
+                return failureResult;
+            }
+        }
 
-                SystemSensorStatus = system[1],
-                HeaterSensorStatus = heater[1],
-                AmbientSensorStatus = ambient[1],
-                PressureSensorStatus = pressure[1],
+        private bool Execute(Action<IModbusMaster> action)
+        {
+            return Execute(activeMaster =>
+            {
+                action(activeMaster);
+                return true;
+            }, false);
+        }
+        
+        public SystemState? ReadState()
+        {
+            return Execute<SystemState?>(master =>
+            {
+                ushort[] system = master.ReadInputRegisters(1, 0, 2);
+                ushort[] heater = master.ReadInputRegisters(2, 0, 2);
+                ushort[] ambient = master.ReadInputRegisters(3, 0, 2);
+                ushort[] pressure = master.ReadInputRegisters(4, 0, 2);
+                ushort[] pid = master.ReadHoldingRegisters(5, 0, 2);
 
-                HeaterSetpoint = unchecked((short)pid[0]) / 10.0,
-                HeaterEnabled = pid[1] == 1
-            };
+                return new SystemState
+                {
+                    TSystem = unchecked((short)system[0]) / 10.0,
+                    THeater = unchecked((short)heater[0]) / 10.0,
+                    TAmbient = unchecked((short)ambient[0]) / 10.0,
+                    Pressure = pressure[0] / 10.0,
+
+                    SystemSensorStatus = system[1],
+                    HeaterSensorStatus = heater[1],
+                    AmbientSensorStatus = ambient[1],
+                    PressureSensorStatus = pressure[1],
+
+                    HeaterSetpoint = unchecked((short)pid[0]) / 10.0,
+                    HeaterEnabled = pid[1] == 1
+                };
+            }, null);
         }
 
         private ushort EncodeSetpoint(double temperature)
@@ -72,33 +103,48 @@ namespace TempSystem.Services
             return (ushort)Math.Round(temperature * 10.0);
         }
 
-        public void InitializeHeater()
+        public bool InitializeHeater()
         {
-            GetMaster().WriteMultipleRegisters(5, 0, new ushort[] { 500, 1 });
+            return Execute(master => master.WriteMultipleRegisters(5, 0, new ushort[] { 500, 1 }));
         }
 
-        public void StartHeating(double setpoint)
+        public bool StartHeating(double setpoint)
         {
-            GetMaster().WriteMultipleRegisters(
-                5, 0, new ushort[] { EncodeSetpoint(setpoint), 1 });
+            return Execute(master => master.WriteMultipleRegisters(
+                5, 0, new ushort[] { EncodeSetpoint(setpoint), 1 }));
         }
 
-        public void SetSetpoint(double setpoint)
+        public bool SetSetpoint(double setpoint)
         {
-            GetMaster().WriteSingleRegister(5, 0, EncodeSetpoint(setpoint));
+            return Execute(master => master.WriteSingleRegister(5, 0, EncodeSetpoint(setpoint)));
         }
 
-        public void SetHeaterEnabled(bool enabled)
+        public bool SetHeaterEnabled(bool enabled)
         {
-            GetMaster().WriteSingleRegister(5, 1, (ushort)(enabled ? 1 : 0));
+            return Execute(master => master.WriteSingleRegister(5, 1, (ushort)(enabled ? 1 : 0)));
         }
 
         public void Disconnect()
         {
-            master?.Dispose();
+            var disconnectedMaster = master;
+            var disconnectedClient = client;
             master = null;
-            client?.Dispose();
             client = null;
+
+            DisposeSafely(disconnectedMaster);
+            DisposeSafely(disconnectedClient);
+        }
+
+        private static void DisposeSafely(IDisposable? resource)
+        {
+            try
+            {
+                resource?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Debug.WriteLine("Ошибка освобождения TCP-соединения: " + ex);
+            }
         }
     }
 }

@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TempSystem"
         mc:Ignorable="d"
-        Title="MainWindow" Height="590" Width="800" Background="#708090" >
+        Title="MainWindow" Height="590" Width="800" Background="#C0C0C0" >
     <Grid Margin="15">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -24,8 +24,8 @@
                 <TextBox x:Name="IpAddressTextBox" Text="127.0.0.1" Width="130" Padding="4" Margin="8,0,15,0" />
                 <TextBlock Text="Порт:" VerticalAlignment="Center" />
                 <TextBox x:Name="PortTextBox" Text="21316" Width="75" Padding="4" Margin="8,0,15,0" />
-                <Button x:Name="ConnectButton" Content="Подключить" Padding="12,4" />
-                <TextBlock x:Name="ConnectionStateText" Text="Нет связи" Foreground="#800000" VerticalAlignment="Center" Margin="15,0,0,0" />
+                <Button x:Name="ConnectButton" Content="Подключить" Padding="12,4" Click="ConnectButton_Click"/>
+                <TextBlock x:Name="ConnectionStateText" Text="Нет связи" Foreground="Maroon" VerticalAlignment="Center" Margin="15,0,0,0" />
             </StackPanel>
         </GroupBox>
 
@@ -75,9 +75,9 @@
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-                    <Button x:Name="InitializeButton" Content="Инициализация (50 °C)" Padding="10,4" />
-                    <Button x:Name="StartButton" Content="Запустить" Padding="10,4" Margin="10,0,0,0" />
-                    <Button x:Name="StopButton" Content="Остановить" Padding="10,4" Margin="10,0,0,0" />
+                    <Button x:Name="InitializeButton" Content="Инициализация (50 °C)" Padding="10,4" Click="InitializeButton_Click" />
+                    <Button x:Name="StartButton" Content="Запустить" Padding="10,4" Margin="10,0,0,0" Click="StartButton_Click" />
+                    <Button x:Name="StopButton" Content="Остановить" Padding="10,4" Margin="10,0,0,0" Click="StopButton_Click" />
                 </StackPanel>
 
                 <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
