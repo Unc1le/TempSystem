@@ -5,8 +5,95 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TempSystem"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <Grid>
+        Title="MainWindow" Height="590" Width="800" Background="#708090" >
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
+        <TextBlock Text="Калибровка температурной системы"
+                   FontSize="20" FontWeight="Bold" />
+
+        <GroupBox Grid.Row="1" Header="Подключение" Margin="0,12,0,0">
+            <StackPanel Orientation="Horizontal" Margin="10">
+                <TextBlock Text="IP:" VerticalAlignment="Center" />
+                <TextBox x:Name="IpAddressTextBox" Text="127.0.0.1" Width="130" Padding="4" Margin="8,0,15,0" />
+                <TextBlock Text="Порт:" VerticalAlignment="Center" />
+                <TextBox x:Name="PortTextBox" Text="21316" Width="75" Padding="4" Margin="8,0,15,0" />
+                <Button x:Name="ConnectButton" Content="Подключить" Padding="12,4" />
+                <TextBlock x:Name="ConnectionStateText" Text="Нет связи" Foreground="#800000" VerticalAlignment="Center" Margin="15,0,0,0" />
+            </StackPanel>
+        </GroupBox>
+
+        <GroupBox Grid.Row="2" Header="Показания датчиков" Margin="0,12,0,0">
+            <Grid Margin="10">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="260" />
+                    <ColumnDefinition Width="90" />
+                    <ColumnDefinition Width="60" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="28" />
+                    <RowDefinition Height="28" />
+                </Grid.RowDefinitions>
+
+                <TextBlock Text="Температура системы" />
+                <TextBlock x:Name="SystemTemperatureValue" Grid.Column="1" Text="—" />
+                <TextBlock Grid.Column="2" Text="°C" />
+                <TextBlock x:Name="SystemStatusText" Grid.Column="3" Text="Нет данных" />
+
+                <TextBlock Grid.Row="1" Text="Температура нагревателя" />
+                <TextBlock x:Name="HeaterTemperatureValue" Grid.Row="1" Grid.Column="1" Text="—" />
+                <TextBlock Grid.Row="1" Grid.Column="2" Text="°C" />
+                <TextBlock x:Name="HeaterStatusText" Grid.Row="1" Grid.Column="3" Text="Нет данных" />
+
+                <TextBlock Grid.Row="2" Text="Температура окружающей среды" />
+                <TextBlock x:Name="AmbientTemperatureValue" Grid.Row="2" Grid.Column="1" Text="—" />
+                <TextBlock Grid.Row="2" Grid.Column="2" Text="°C" />
+                <TextBlock x:Name="AmbientStatusText" Grid.Row="2" Grid.Column="3" Text="Нет данных" />
+
+                <TextBlock Grid.Row="3" Text="Давление" />
+                <TextBlock x:Name="PressureValue" Grid.Row="3" Grid.Column="1" Text="—" />
+                <TextBlock Grid.Row="3" Grid.Column="2" Text="кПа" />
+                <TextBlock x:Name="PressureStatusText" Grid.Row="3" Grid.Column="3" Text="Нет данных" />
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Grid.Row="3" Header="Управление" Margin="0,12,0,0">
+            <StackPanel Margin="10">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Целевая температура системы:" VerticalAlignment="Center" />
+                    <TextBox x:Name="TargetTemperatureTextBox" Text="50,0" Width="90" Padding="4" Margin="10,0,8,0" />
+                    <TextBlock Text="°C (15–150)" VerticalAlignment="Center" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <Button x:Name="InitializeButton" Content="Инициализация (50 °C)" Padding="10,4" />
+                    <Button x:Name="StartButton" Content="Запустить" Padding="10,4" Margin="10,0,0,0" />
+                    <Button x:Name="StopButton" Content="Остановить" Padding="10,4" Margin="10,0,0,0" />
+                </StackPanel>
+
+                <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+                    <TextBlock Text="Уставка нагревателя:" />
+                    <TextBlock x:Name="HeaterSetpointValue" Text="—" Margin="8,0,0,0" />
+                    <TextBlock Text="°C" Margin="5,0,0,0" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Text="Регулирование:" />
+                    <TextBlock x:Name="ControlStateText" Text="Остановлено" Margin="8,0,0,0" />
+                </StackPanel>
+
+                <TextBlock Text="Допуск: ±0,2 °C. Уставка нагревателя: 20–450 °C." FontSize="12" Foreground="White" Margin="0,10,0,0" />
+            </StackPanel>
+        </GroupBox>
+
+        <TextBlock x:Name="StatusText" Grid.Row="4" Text="Подключитесь к эмулятору." TextWrapping="Wrap" Margin="0,12,0,0" FontSize="12" />
     </Grid>
 </Window>
