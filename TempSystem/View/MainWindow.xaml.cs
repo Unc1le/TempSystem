@@ -13,6 +13,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using TempSystem.Chart;
 using TempSystem.Models;
 using TempSystem.Services;
 
@@ -23,6 +24,7 @@ namespace TempSystem
         private readonly ModbusService _modbus = new();
         private readonly TemperatureController _controller = new();
         private readonly DispatcherTimer _timer = new();
+        private readonly ChartViewModel _chart;
 
         private bool _connected;
         private bool _running;
@@ -34,6 +36,7 @@ namespace TempSystem
         public MainWindow()
         {
             InitializeComponent();
+            _chart = (ChartViewModel)DataContext;
             _modbus.ConnectionLost += Modbus_ConnectionLost;
             Closing += Window_Closing;
             _timer.Interval = TimeSpan.FromMilliseconds(500);
@@ -148,6 +151,9 @@ namespace TempSystem
                 return null;
 
             ShowState(state);
+            _chart.AddMeasurement(
+                state.SystemSensorStatus == 0 ? state.TSystem : null,
+                state.HeaterSensorStatus == 0 ? state.THeater : null);
             if (!state.HasSensorError && state.TSystem < 160 && state.THeater < 470)
                 return state;
 
@@ -203,6 +209,7 @@ namespace TempSystem
                 _connected = true;
                 if (_closing) return;
 
+                _chart.Clear();
                 ConnectionStateText.Text = "Подключено";
                 ConnectionStateText.Foreground = Brushes.Green;
                 await InitializeHeaterAsync();
